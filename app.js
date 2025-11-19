@@ -56,30 +56,117 @@ const countryAnalysis = document.getElementById('countryAnalysis');
   }
 })();
 
-// ---------- HOME SPARKLINE (DEMO ONLY) ----------
-function demoSeries(seed = 1, start = 1990, end = 2024) {
-  const rnd = () => Math.random();
-  const years = [], values = [];
-  let v = 800 + rnd() * 300;
-  for (let y = start; y <= end; y++) {
-    v += (rnd() - .4) * 15;
-    v = Math.max(300, v);
-    years.push(y); values.push(v);
+// ---------- HOME GLOBE ----------
+async function initGlobe() {
+  const globeContainer = document.getElementById('globeViz');
+
+  // Fetch countries to highlight (from backend)
+  let supportedCountries = [];
+  try {
+    const res = await fetch(`${BASE_URL}/countries`);
+    supportedCountries = await res.json();
+  } catch (e) {
+    console.warn("Could not load supported countries for globe highlight");
   }
-  return { years, values };
+
+  // Fetch World GeoJSON
+  const geoRes = await fetch('https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson');
+  const geoData = await geoRes.json();
+
+  const world = Globe()
+    (globeContainer)
+    .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+    .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+    .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
+    .width(globeContainer.clientWidth)
+    .height(400)
+    .polygonsData(geoData.features)
+    .polygonCapColor(d => {
+      const name = d.properties.NAME || d.properties.ADMIN;
+      const isSupported = isCountrySupported(name, supportedCountries);
+      return isSupported ? 'rgba(255, 215, 0, 0.7)' : 'rgba(255, 255, 255, 0.05)';
+    })
+    .polygonSideColor(() => 'rgba(0, 0, 0, 0.1)')
+    .polygonStrokeColor(() => '#111')
+    .polygonLabel(({ properties: d }) => `
+      <div style="background: #333; color: #fff; padding: 4px 8px; border-radius: 4px;">
+        <b>${d.NAME}</b>
+      </div>
+    `)
+    .labelsData(geoData.features.filter(d => {
+      const name = d.properties.NAME || d.properties.ADMIN;
+      return isCountrySupported(name, supportedCountries);
+    }))
+    .labelLat(d => {
+      if (d.properties.LABEL_Y) return d.properties.LABEL_Y;
+      if (d.properties.latitude) return d.properties.latitude;
+      if (d.bbox) return (d.bbox[1] + d.bbox[3]) / 2;
+      return 0;
+    })
+    .labelLng(d => {
+      if (d.properties.LABEL_X) return d.properties.LABEL_X;
+      if (d.properties.longitude) return d.properties.longitude;
+      if (d.bbox) return (d.bbox[0] + d.bbox[2]) / 2;
+      return 0;
+    })
+    .labelText(d => d.properties.NAME)
+    .labelSize(1.5)
+    .labelDotRadius(0.5)
+    .labelColor(() => '#fff')
+    .labelResolution(2)
+    .onPolygonClick(({ properties: d }) => {
+      const name = d.NAME;
+      // Try to find exact match in dropdown
+      const match = findDropdownMatch(name);
+
+      if (match) {
+        countrySel.value = match;
+        location.hash = '#predict';
+        renderCompare(match);
+      } else {
+        alert(`Sorry, we don't have data for ${name} yet.`);
+      }
+    });
+
+  // Auto-rotate
+  world.controls().autoRotate = true;
+  world.controls().autoRotateSpeed = 0.5;
 }
 
-const sparkCtx = document.getElementById('homeSpark').getContext('2d');
-const demoHome = demoSeries(7);
-new Chart(sparkCtx, {
-  type: 'line',
-  data: { labels: demoHome.years, datasets: [{ label: '', data: demoHome.values, fill: false, tension: .35 }] },
-  options: {
-    plugins: { legend: { display: false } },
-    scales: { x: { display: false }, y: { display: false } },
-    elements: { point: { radius: 0 } }
-  }
-});
+// Helper: Strict Country Matching
+function isCountrySupported(geoName, dbList) {
+  if (!geoName) return false;
+  const g = geoName.toLowerCase();
+
+  return dbList.some(db => {
+    const d = db.toLowerCase();
+    // Exact match
+    if (g === d) return true;
+    // Common Aliases
+    if (d === 'usa' && (g === 'united states of america' || g === 'united states')) return true;
+    if (d === 'england' && (g === 'united kingdom' || g === 'great britain')) return true;
+    if (d === 'uk' && (g === 'united kingdom')) return true;
+    if (d === 'uae' && g.includes('united arab emirates')) return true;
+    return false;
+  });
+}
+
+// Helper: Find Dropdown Value
+function findDropdownMatch(geoName) {
+  const options = [...countrySel.options].map(o => o.value);
+  const g = geoName.toLowerCase();
+
+  return options.find(opt => {
+    const o = opt.toLowerCase();
+    if (g === o) return true;
+    if (o === 'usa' && (g === 'united states of america' || g === 'united states')) return true;
+    if (o === 'england' && (g === 'united kingdom')) return true;
+    return false;
+  });
+}
+
+// Initialize after a slight delay to ensure container is ready
+setTimeout(initGlobe, 1000);
 
 // ---------- RECENT CAROUSEL ----------
 function renderCarousel() {
@@ -246,7 +333,7 @@ async function renderAnalysis(country = "India") {
         labels: data.years,
         datasets: [{
           label: `${country} Water Consumption`,
-          data: data.true_values,   // <-- FIXED
+          data: data.true_values,
           borderColor: "#00b7ff",
           borderWidth: 2,
           fill: false,
@@ -281,40 +368,45 @@ function renderHistory() {
     tr.innerHTML = `
       <td>${i + 1}</td>
       <td>${r.country}</td>
-      <td>${new Date(r.ts).toLocaleString()}</td>
+      <td>${new Date(r.ts).toLocaleDateString()}</td>
       <td>${r.year}</td>
       <td>${r.models.join(', ')}</td>
-      <td>${fmt(r.predicted)} m³</td>
+      <td>${fmt(r.predicted)}</td>
       <td>${r.change > 0 ? '+' : ''}${fmt(r.change)}%</td>
-      <td class="action">
-        <button class="btn ghost" data-view="${i}"><i class="fa-solid fa-eye"></i></button>
-        <button class="btn danger" data-del="${i}"><i class="fa-solid fa-trash"></i></button>
-      </td>
+      <td><button class="btn danger sm" onclick="deleteHistory(${i})"><i class="fa-solid fa-trash"></i></button></td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-renderHistory();
-
-document.getElementById('exportAll').addEventListener('click', () => {
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(store.load(), null, 2));
-  const a = document.createElement('a');
-  a.href = dataStr;
-  a.download = "predictions-history.json";
-  a.click();
-});
+// Global scope for onclick
+window.deleteHistory = (index) => {
+  const arr = store.load();
+  arr.splice(index, 1);
+  store.save(arr);
+  renderHistory();
+  renderCarousel();
+};
 
 document.getElementById('clearHistory').addEventListener('click', () => {
-  if (confirm("Clear all saved predictions?")) {
-    localStorage.removeItem("wc-forecast-history");
+  if (confirm("Clear all history?")) {
+    localStorage.removeItem(store.key);
     renderHistory();
     renderCarousel();
   }
 });
 
-// Footer year
-document.getElementById('yearNow').textContent = new Date().getFullYear();
+document.getElementById('exportAll').addEventListener('click', () => {
+  const data = JSON.stringify(store.load(), null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'prediction_history.json';
+  a.click();
+});
+
+renderHistory();
 
 // ---------- PDF REPORT GENERATION ----------
 document.getElementById('downloadReport').addEventListener('click', async () => {
@@ -324,60 +416,29 @@ document.getElementById('downloadReport').addEventListener('click', async () => 
   // Title
   doc.setFontSize(20);
   doc.text("Water Consumption Forecast Report", 14, 22);
-  
-  doc.setFontSize(11);
+
+  doc.setFontSize(12);
   doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
 
-  let yPos = 40;
-
-  // 1. Model Comparison Metrics
+  // 1. Comparison Metrics Table
   doc.setFontSize(14);
-  doc.text("Model Comparison Metrics", 14, yPos);
-  yPos += 5;
+  doc.text("Model Comparison Metrics", 14, 45);
 
   doc.autoTable({
+    startY: 50,
     html: '#metricsTable',
-    startY: yPos,
     theme: 'grid',
-    headStyles: { fillColor: [41, 128, 185] }
+    headStyles: { fillColor: [0, 119, 255] }
   });
 
-  yPos = doc.lastAutoTable.finalY + 15;
+  let finalY = doc.lastAutoTable.finalY + 10;
 
   // 2. Visual Comparison Chart
-  if (compareChart) {
-    doc.text("Visual Comparison", 14, yPos);
-    yPos += 5;
-    const canvas = document.getElementById('compareChart');
-    const imgData = canvas.toDataURL('image/png');
-    doc.addImage(imgData, 'PNG', 14, yPos, 180, 90);
-    yPos += 100;
-  }
+  const canvas = document.getElementById('compareChart');
+  const imgData = canvas.toDataURL('image/png');
 
-  // 3. Recent Predictions (from Store)
-  if (yPos > 250) {
-    doc.addPage();
-    yPos = 20;
-  }
-
-  doc.text("Recent Predictions History", 14, yPos);
-  yPos += 5;
-
-  const history = store.load().slice(0, 10); // Top 10
-  const historyData = history.map(h => [
-    h.country,
-    h.year,
-    h.models.join(', '),
-    fmt(h.predicted) + ' m3',
-    (h.change > 0 ? '+' : '') + fmt(h.change) + '%'
-  ]);
-
-  doc.autoTable({
-    head: [['Country', 'Year', 'Models', 'Predicted', 'Change']],
-    body: historyData,
-    startY: yPos,
-    theme: 'striped'
-  });
+  doc.text("Visual Comparison Chart", 14, finalY);
+  doc.addImage(imgData, 'PNG', 14, finalY + 5, 180, 90);
 
   // Save
   doc.save("Water_Forecast_Report.pdf");
