@@ -315,3 +315,70 @@ document.getElementById('clearHistory').addEventListener('click', () => {
 
 // Footer year
 document.getElementById('yearNow').textContent = new Date().getFullYear();
+
+// ---------- PDF REPORT GENERATION ----------
+document.getElementById('downloadReport').addEventListener('click', async () => {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // Title
+  doc.setFontSize(20);
+  doc.text("Water Consumption Forecast Report", 14, 22);
+  
+  doc.setFontSize(11);
+  doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+
+  let yPos = 40;
+
+  // 1. Model Comparison Metrics
+  doc.setFontSize(14);
+  doc.text("Model Comparison Metrics", 14, yPos);
+  yPos += 5;
+
+  doc.autoTable({
+    html: '#metricsTable',
+    startY: yPos,
+    theme: 'grid',
+    headStyles: { fillColor: [41, 128, 185] }
+  });
+
+  yPos = doc.lastAutoTable.finalY + 15;
+
+  // 2. Visual Comparison Chart
+  if (compareChart) {
+    doc.text("Visual Comparison", 14, yPos);
+    yPos += 5;
+    const canvas = document.getElementById('compareChart');
+    const imgData = canvas.toDataURL('image/png');
+    doc.addImage(imgData, 'PNG', 14, yPos, 180, 90);
+    yPos += 100;
+  }
+
+  // 3. Recent Predictions (from Store)
+  if (yPos > 250) {
+    doc.addPage();
+    yPos = 20;
+  }
+
+  doc.text("Recent Predictions History", 14, yPos);
+  yPos += 5;
+
+  const history = store.load().slice(0, 10); // Top 10
+  const historyData = history.map(h => [
+    h.country,
+    h.year,
+    h.models.join(', '),
+    fmt(h.predicted) + ' m3',
+    (h.change > 0 ? '+' : '') + fmt(h.change) + '%'
+  ]);
+
+  doc.autoTable({
+    head: [['Country', 'Year', 'Models', 'Predicted', 'Change']],
+    body: historyData,
+    startY: yPos,
+    theme: 'striped'
+  });
+
+  // Save
+  doc.save("Water_Forecast_Report.pdf");
+});

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -8,15 +9,21 @@
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" referrerpolicy="no-referrer"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    referrerpolicy="no-referrer" />
 
   <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
 
   <!-- Chart.js for charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- jsPDF for reports -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
 </head>
+
 <body>
   <div class="app-shell">
     <!-- Top Nav -->
@@ -43,9 +50,11 @@
           <div class="hero-text">
             <h1>Water Consumption Forecasting</h1>
             <p>Interactive forecasting using <b>LASSO</b>, <b>KNN</b>, and <b>Ridge Regression</b> across
-              <b>20 countries</b> (1990–2024). Explore trends, compare models, and save your scenario results.</p>
+              <b>20 countries</b> (1990–2024). Explore trends, compare models, and save your scenario results.
+            </p>
             <div class="cta">
-              <a class="btn primary" href="#predict"><i class="fa-solid fa-wand-magic-sparkles"></i> Start Predicting</a>
+              <a class="btn primary" href="#predict"><i class="fa-solid fa-wand-magic-sparkles"></i> Start
+                Predicting</a>
               <a class="btn ghost" href="#compare"><i class="fa-solid fa-chart-line"></i> Compare Models</a>
             </div>
           </div>
@@ -89,14 +98,14 @@
               </label>
 
               <label>Year
-                <input id="year" type="number" min="1990" max="2100" value="2025" required/>
+                <input id="year" type="number" min="1990" max="2100" value="2025" required />
               </label>
 
               <fieldset class="models">
                 <legend>Choose Models</legend>
-                <label><input type="checkbox" name="model" value="lasso" checked/> LASSO</label>
-                <label><input type="checkbox" name="model" value="knn" checked/> KNN</label>
-                <label><input type="checkbox" name="model" value="ridge" checked/> Ridge</label>
+                <label><input type="checkbox" name="model" value="lasso" checked /> LASSO</label>
+                <label><input type="checkbox" name="model" value="knn" checked /> KNN</label>
+                <label><input type="checkbox" name="model" value="ridge" checked /> Ridge</label>
               </fieldset>
 
               <button class="btn primary" type="submit"><i class="fa-solid fa-play"></i> Predict</button>
@@ -128,19 +137,48 @@
       <!-- COMPARE -->
       <section id="compare" class="route">
         <div class="card">
-          <h2 class="section-title">Model Comparison</h2>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 class="section-title" style="margin-bottom: 0;">Model Comparison</h2>
+            <button id="downloadReport" class="btn primary"><i class="fa-solid fa-file-pdf"></i> Download
+              Report</button>
+          </div>
           <div class="metrics-table-wrapper">
-          <table class="metrics-table" id="metricsTable">
-            <thead>
-              <tr><th>Metric</th><th>LASSO</th><th>KNN</th><th>Ridge</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>MAE</td><td data-k="mae-lasso">—</td><td data-k="mae-knn">—</td><td data-k="mae-ridge">—</td></tr>
-              <tr><td>RMSE</td><td data-k="rmse-lasso">—</td><td data-k="rmse-knn">—</td><td data-k="rmse-ridge">—</td></tr>
-              <tr><td>R²</td><td data-k="r2-lasso">—</td><td data-k="r2-knn">—</td><td data-k="r2-ridge">—</td></tr>
-              <tr><td>MAPE (%)</td><td data-k="mape-lasso">—</td><td data-k="mape-knn">—</td><td data-k="mape-ridge">—</td></tr>
-            </tbody>
-          </table>
+            <table class="metrics-table" id="metricsTable">
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>LASSO</th>
+                  <th>KNN</th>
+                  <th>Ridge</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>MAE</td>
+                  <td data-k="mae-lasso">—</td>
+                  <td data-k="mae-knn">—</td>
+                  <td data-k="mae-ridge">—</td>
+                </tr>
+                <tr>
+                  <td>RMSE</td>
+                  <td data-k="rmse-lasso">—</td>
+                  <td data-k="rmse-knn">—</td>
+                  <td data-k="rmse-ridge">—</td>
+                </tr>
+                <tr>
+                  <td>R²</td>
+                  <td data-k="r2-lasso">—</td>
+                  <td data-k="r2-knn">—</td>
+                  <td data-k="r2-ridge">—</td>
+                </tr>
+                <tr>
+                  <td>MAPE (%)</td>
+                  <td data-k="mape-lasso">—</td>
+                  <td data-k="mape-knn">—</td>
+                  <td data-k="mape-ridge">—</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -191,7 +229,14 @@
             <table id="historyTable">
               <thead>
                 <tr>
-                  <th>#</th><th>Country</th><th>Date</th><th>Year</th><th>Models</th><th>Predicted</th><th>Change</th><th>Action</th>
+                  <th>#</th>
+                  <th>Country</th>
+                  <th>Date</th>
+                  <th>Year</th>
+                  <th>Models</th>
+                  <th>Predicted</th>
+                  <th>Change</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -211,4 +256,5 @@
   <!-- App Script -->
   <script src="app.js"></script>
 </body>
+
 </html>
