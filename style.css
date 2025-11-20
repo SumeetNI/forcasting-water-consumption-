@@ -22,6 +22,10 @@ body {
   height: 100%
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -127,23 +131,102 @@ main {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
-  align-items: center
+  align-items: center;
+  position: relative;
+  padding: clamp(20px, 3vw, 32px);
+  overflow: hidden;
+  border: 1px solid rgba(122, 234, 255, .18);
+  background: radial-gradient(120% 140% at 20% 10%, rgba(122, 234, 255, .18), transparent),
+    radial-gradient(80% 120% at 80% 0%, rgba(123, 255, 206, .12), transparent),
+    linear-gradient(135deg, rgba(11, 18, 32, .9), rgba(8, 12, 24, .95));
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid rgba(122, 234, 255, .08);
+}
+
+.hero-text {
+  position: relative;
+  z-index: 1;
 }
 
 .hero h1 {
-  font-size: clamp(28px, 4vw, 44px);
-  margin: 0 0 8px
+  font-size: clamp(32px, 4vw, 48px);
+  margin: 0 0 10px;
+  line-height: 1.1;
+  background: linear-gradient(120deg, #f8fbff 30%, #68d6ff 60%, #7bffce 90%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .hero p {
   color: var(--muted);
-  margin: 0 0 18px
+  margin: 0 0 18px;
+  max-width: 520px;
+}
+
+.hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.metric {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(122, 234, 255, .12);
+  box-shadow: inset 0 0 25px rgba(106, 198, 255, .08);
+}
+
+.metric .label {
+  color: var(--muted);
+  font-size: .75rem;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+.metric .value {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .cta {
   display: flex;
   gap: 12px;
   flex-wrap: wrap
+}
+
+.hero-viz {
+  min-height: 360px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid rgba(122, 234, 255, .18);
+  background: radial-gradient(circle at 50% 40%, rgba(106, 198, 255, .25), rgba(11, 18, 32, .75));
+  box-shadow: inset 0 25px 45px rgba(0, 0, 0, .45);
+}
+
+#globeViz {
+  width: 100%;
+  height: 100%;
+}
+
+#globeViz canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .btn {
@@ -366,18 +449,17 @@ select:focus {
   border: 1px solid rgba(122, 234, 255, .12)
 }
 
-/* ---------- Router/Transitions ---------- */
+/* ---------- Sections & Transitions ---------- */
 .route {
-  display: none;
-  opacity: 0;
-  transform: translateY(6px);
-  transition: all .35s ease
-}
-
-.route.active {
   display: block;
   opacity: 1;
-  transform: none
+  transform: none;
+  margin: 48px 0;
+  scroll-margin-top: 90px;
+}
+
+.route:first-of-type {
+  margin-top: 0;
 }
 
 .fade-in {

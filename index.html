@@ -55,14 +55,27 @@
             <p>Interactive forecasting using <b>LASSO</b>, <b>KNN</b>, and <b>Ridge Regression</b> across
               <b>20 countries</b> (1990–2024). Explore trends, compare models, and save your scenario results.
             </p>
+            <div class="hero-metrics">
+              <div class="metric">
+                <span class="label">Coverage</span>
+                <span class="value">20 Countries</span>
+              </div>
+              <div class="metric">
+                <span class="label">Models</span>
+                <span class="value">LASSO • KNN • Ridge</span>
+              </div>
+              <div class="metric">
+                <span class="label">Horizon</span>
+                <span class="value">1990 — 2024</span>
+              </div>
+            </div>
             <div class="cta">
               <a class="btn primary" href="#predict"><i class="fa-solid fa-wand-magic-sparkles"></i> Start
                 Predicting</a>
               <a class="btn ghost" href="#compare"><i class="fa-solid fa-chart-line"></i> Compare Models</a>
             </div>
           </div>
-          <div class="hero-viz"
-            style="height: 400px; display: flex; align-items: center; justify-content: center; position: relative;">
+          <div class="hero-viz">
             <div id="globeViz"></div>
             <div class="globe-legend">
               <div class="legend-item"><span class="dot low"></span> Low Stress</div>
@@ -139,6 +152,14 @@
             <h3 class="section-subtitle">Historical + Forecast</h3>
             <canvas id="predictChart" height="140"></canvas>
             <p class="note">Shaded band indicates an approximate confidence interval for the selected model.</p>
+          </div>
+
+
+          <div class="card" style="margin-top: 18px;">
+            <h3 class="section-subtitle">💧 Water Use by Sector</h3>
+            <div style="max-width: 400px; margin: 0 auto;">
+              <canvas id="sectorChart" height="200"></canvas>
+            </div>
           </div>
         </div>
       </section>

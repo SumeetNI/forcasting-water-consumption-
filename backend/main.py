@@ -130,6 +130,23 @@ def predict(body: PredictInput):
     band = [[float(v - 2*std), float(v + 2*std)] for v in y_fit] + \
            [[float(y_future - 2*std), float(y_future + 2*std)]]
 
+    # Simulate sectoral breakdown based on country
+    # In production, this would come from real data
+    country_lower = country.lower()
+    
+    # Heuristic: Agricultural countries have higher agriculture %
+    if country_lower in ["india", "china", "pakistan", "bangladesh", "vietnam"]:
+        agriculture = 65 + np.random.randint(-5, 5)
+        industry = 20 + np.random.randint(-3, 3)
+    elif country_lower in ["usa", "germany", "japan", "england", "france"]:
+        agriculture = 35 + np.random.randint(-5, 5)
+        industry = 40 + np.random.randint(-5, 5)
+    else:
+        agriculture = 50 + np.random.randint(-10, 10)
+        industry = 30 + np.random.randint(-5, 5)
+    
+    domestic = 100 - agriculture - industry
+    
     return {
         "model_used": model_key,
         "years": hist["Year"].tolist() + [year],
@@ -138,6 +155,11 @@ def predict(body: PredictInput):
         "predicted": y_future,
         "change": change,
         "band": band,
+        "sectors": {
+            "agriculture": float(agriculture),
+            "industry": float(industry),
+            "domestic": float(domestic)
+        },
         "metrics": {}
     }
 

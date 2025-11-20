@@ -12,21 +12,39 @@ const store = {
   add: (item) => { const arr = store.load(); arr.unshift(item); store.save(arr); }
 };
 
-// ---------- Router ----------
-const routes = [...document.querySelectorAll('.route')];
-const links = [...document.querySelectorAll('.link')];
+// ---------- Navigation Highlight ----------
+const navLinks = [...document.querySelectorAll('.nav-links .link')];
+const sections = navLinks
+  .map(link => {
+    const id = link.getAttribute('href')?.replace('#', '');
+    const target = document.getElementById(id);
+    return target ? { link, target } : null;
+  })
+  .filter(Boolean);
 
-function activate(id) {
-  routes.forEach(s => s.classList.remove('active'));
-  document.getElementById(id)?.classList.add('active');
-  links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+function highlightNav() {
+  const scrollPos = window.scrollY + 140;
+  let activeFound = false;
+  sections.forEach(({ link, target }) => {
+    const top = target.offsetTop;
+    const bottom = top + target.offsetHeight;
+    const isActive = scrollPos >= top && scrollPos < bottom;
+    link.classList.toggle('active', isActive);
+    if (isActive) activeFound = true;
+  });
+
+  if (!activeFound && sections.length) {
+    sections[sections.length - 1].link.classList.add('active');
+  }
 }
 
-window.addEventListener('hashchange', () => activate(location.hash.replace('#', '') || 'home'));
-activate(location.hash.replace('#', '') || 'home');
+window.addEventListener('scroll', highlightNav);
+highlightNav();
 
-document.querySelector('.brand').addEventListener('click', () => { location.hash = '#home' });
+document.querySelector('.brand').addEventListener('click', (e) => {
+  e.preventDefault();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
 
 // ---------- COUNTRY DROPDOWNS ----------
 const countrySel = document.getElementById('country');
@@ -254,6 +272,42 @@ function renderPredictChart(labels, series, band) {
   });
 }
 
+// Sector Chart
+let sectorChart;
+
+function renderSectorChart(sectors) {
+  const ctx = document.getElementById('sectorChart').getContext('2d');
+
+  if (sectorChart) sectorChart.destroy();
+
+  sectorChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['🌾 Agriculture', '🏭 Industry', '🏠 Domestic'],
+      datasets: [{
+        data: [sectors.agriculture, sectors.industry, sectors.domestic],
+        backgroundColor: [
+          'rgba(76, 201, 240, 0.8)',   // Cyan
+          'rgba(255, 159, 64, 0.8)',   // Orange
+          'rgba(153, 102, 255, 0.8)'   // Purple
+        ],
+        borderColor: '#111a2e',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#e7eefc', padding: 12, font: { size: 13 } }
+        }
+      }
+    }
+  });
+}
+
 predictForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -277,6 +331,11 @@ predictForm.addEventListener('submit', async (e) => {
     document.getElementById('statChange').textContent = data.change.toFixed(2) + '%';
 
     renderPredictChart(data.years, data.values, data.band);
+
+    // Render sector breakdown if available
+    if (data.sectors) {
+      renderSectorChart(data.sectors);
+    }
 
     store.add({ country, year, models, predicted: data.predicted, change: data.change, ts: Date.now() });
     renderHistory();

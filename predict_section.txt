@@ -1,0 +1,17 @@
+                <span class="label">Change</span>
+                <span id="statChange" class="value">—</span>
+              </div>
+            </div>
+            
+            <div class="sector-breakdown">
+              <h3 class="section-subtitle">💧 Water Use by Sector</h3>
+              <canvas id="sectorChart" height="180"></canvas>
+            </div>
+          </div>
+          <div class="right card slide-up delay-1">
+            <h3 class="section-subtitle">Historical + Forecast</h3>
+            <canvas id="predictChart" height="140"></canvas>
+            <p class="note">Shaded band indicates an approximate confidence interval for the selected model.</p>
+          </div>
+        </div>
+      </section>
