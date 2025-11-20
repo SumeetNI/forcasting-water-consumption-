@@ -56,6 +56,24 @@ const countryAnalysis = document.getElementById('countryAnalysis');
   }
 })();
 
+// Helper: Get Simulated Water Stress (0-100)
+function getWaterStress(countryName) {
+  // Deterministic random based on name length for consistency during session
+  // In real app, fetch from API
+  let hash = 0;
+  for (let i = 0; i < countryName.length; i++) {
+    hash = countryName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash % 100);
+}
+
+// Helper: Get Color for Stress Level
+function getStressColor(score) {
+  if (score < 40) return 'rgba(76, 201, 240, 0.8)'; // Low (Cyan)
+  if (score < 70) return 'rgba(247, 37, 133, 0.8)'; // Medium (Pink)
+  return 'rgba(255, 0, 0, 0.8)'; // High (Red)
+}
+
 // ---------- HOME GLOBE ----------
 async function initGlobe() {
   const globeContainer = document.getElementById('globeViz');
@@ -84,15 +102,34 @@ async function initGlobe() {
     .polygonCapColor(d => {
       const name = d.properties.NAME || d.properties.ADMIN;
       const isSupported = isCountrySupported(name, supportedCountries);
-      return isSupported ? 'rgba(255, 215, 0, 0.7)' : 'rgba(255, 255, 255, 0.05)';
+      if (isSupported) {
+        const stress = getWaterStress(name);
+        return getStressColor(stress);
+      }
+      return 'rgba(255, 255, 255, 0.05)';
     })
     .polygonSideColor(() => 'rgba(0, 0, 0, 0.1)')
     .polygonStrokeColor(() => '#111')
-    .polygonLabel(({ properties: d }) => `
-      <div style="background: #333; color: #fff; padding: 4px 8px; border-radius: 4px;">
-        <b>${d.NAME}</b>
-      </div>
-    `)
+    .polygonLabel(({ properties: d }) => {
+      const name = d.NAME || d.ADMIN;
+      const isSupported = isCountrySupported(name, supportedCountries);
+      let stressHtml = '';
+      if (isSupported) {
+        const stress = getWaterStress(name);
+        let level = 'Low';
+        let color = '#4cc9f0';
+        if (stress >= 40) { level = 'Medium'; color = '#f72585'; }
+        if (stress >= 70) { level = 'High'; color = '#ff0000'; }
+        stressHtml = `<br><span style="color:${color}">Stress: ${level} (${stress})</span>`;
+      }
+
+      return `
+        <div style="background: #111a2e; color: #fff; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(122, 234, 255, .25);">
+          <b>${name}</b>
+          ${stressHtml}
+        </div>
+      `;
+    })
     .labelsData(geoData.features.filter(d => {
       const name = d.properties.NAME || d.properties.ADMIN;
       return isCountrySupported(name, supportedCountries);
