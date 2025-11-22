@@ -232,17 +232,42 @@
 
       <!-- COUNTRY ANALYSIS -->
       <section id="analysis" class="route">
-        <div class="two-col">
-          <div class="left card">
-            <h2 class="section-title">Country Analysis</h2>
-            <label>Country
-              <select id="countryAnalysis"></select>
+        <div class="analysis-layout">
+          <div class="analysis-panel card">
+            <div class="analysis-header">
+              <span class="eyebrow">Country Insight</span>
+              <h2 class="section-title">Country Analysis</h2>
+              <p class="muted">Track historical withdrawals, spot peaks, and monitor momentum for every
+                supported nation.</p>
+            </div>
+
+            <label class="analysis-select">Focus Country
+              <div class="select-shell">
+                <i class="fa-solid fa-globe"></i>
+                <select id="countryAnalysis"></select>
+              </div>
             </label>
-            <div class="at-a-glance" id="countryFacts"></div>
+
+            <div class="analysis-tags">
+              <span class="tag soft">Hydrology</span>
+              <span class="tag soft">Demand</span>
+              <span class="tag soft">Stress</span>
+            </div>
+
+            <div class="analysis-metrics" id="countryFacts"></div>
+            <p class="analysis-footnote">Figures shown in million cubic meters (approx.).</p>
           </div>
-          <div class="right card">
-            <h3 class="section-subtitle">Trends</h3>
-            <canvas id="analysisChart" height="160"></canvas>
+
+          <div class="analysis-viz card">
+            <div class="analysis-viz-head">
+              <div>
+                <span class="eyebrow">Multi-year Trend</span>
+                <h3 class="section-subtitle">Historical Demand Curve</h3>
+              </div>
+              <span class="trend-pill" id="analysisTrend">—</span>
+            </div>
+            <canvas id="analysisChart" height="220"></canvas>
+            <p class="note">Line displays reported withdrawals. Adjust the country selector to update the view.</p>
           </div>
         </div>
       </section>

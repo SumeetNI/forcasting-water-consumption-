@@ -21,8 +21,9 @@ app.add_middleware(
 )
 
 # Paths
-DATA_PATH = os.path.join("data", "WaterConsumptionDataset(Finalized).csv")
-MODELS_PATH = "models"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = os.path.join(BASE_DIR, "data", "WaterConsumptionDataset(Finalized).csv")
+MODELS_PATH = os.path.join(BASE_DIR, "models")
 
 TARGET_COL = "Total Water Consumption(Billion Cubic Meters)"
 

@@ -442,9 +442,69 @@ async function renderAnalysis(country = "India") {
       }
     });
 
-    document.getElementById('countryFacts').innerHTML =
-      `<div class="stat"><span class="label">Years</span><span class="value">${data.years[0]} - ${data.years[data.years.length - 1]}</span></div>
-       <div class="stat"><span class="label">Total Records</span><span class="value">${data.true_values.length}</span></div>`;
+    const factsEl = document.getElementById('countryFacts');
+    const trendBadge = document.getElementById('analysisTrend');
+    const years = data.years || [];
+    const values = data.true_values || [];
+
+    const firstYear = years[0] || '—';
+    const lastYear = years[years.length - 1] || '—';
+    const spanLabel = `${firstYear} — ${lastYear}`;
+
+    if (!values.length) {
+      factsEl.innerHTML = '<div class="muted">No historical records available.</div>';
+      if (trendBadge) {
+        trendBadge.textContent = '—';
+        trendBadge.classList.remove('down');
+      }
+      return;
+    }
+
+    const sum = values.reduce((acc, val) => acc + val, 0);
+    const avg = sum / values.length;
+    const minVal = Math.min(...values);
+    const maxVal = Math.max(...values);
+    const firstVal = values[0];
+    const lastVal = values[values.length - 1];
+    const prevVal = values.length > 1 ? values[values.length - 2] : lastVal;
+
+    const safeChange = (current, base) => {
+      if (!Number.isFinite(current) || !Number.isFinite(base) || Math.abs(base) < 1e-6) return 0;
+      return ((current - base) / base) * 100;
+    };
+
+    const spanChange = safeChange(lastVal, firstVal);
+    const yoy = safeChange(lastVal, prevVal);
+
+    const formatValue = (val) => Number.isFinite(val) ? fmt(val) : '—';
+
+    factsEl.innerHTML = `
+      <div class="insight-card">
+        <span class="label">Time Span</span>
+        <p class="value">${spanLabel}</p>
+        <span class="hint">Historical window</span>
+      </div>
+      <div class="insight-card">
+        <span class="label">Avg Demand</span>
+        <p class="value">${formatValue(avg)} m³</p>
+        <span class="hint">Annual mean</span>
+      </div>
+      <div class="insight-card">
+        <span class="label">Peak Usage</span>
+        <p class="value">${formatValue(maxVal)} m³</p>
+        <span class="hint">Highest record</span>
+      </div>
+      <div class="insight-card">
+        <span class="label">Change</span>
+        <p class="value ${spanChange < 0 ? 'down' : 'up'}">${spanChange >= 0 ? '+' : ''}${spanChange.toFixed(1)}%</p>
+        <span class="hint">Since ${firstYear}</span>
+      </div>
+    `;
+
+    if (trendBadge) {
+      trendBadge.textContent = `${yoy >= 0 ? '+' : ''}${yoy.toFixed(1)}% YoY`;
+      trendBadge.classList.toggle('down', yoy < 0);
+    }
 
   } catch (err) {
     alert("Error loading analysis data: " + err.message);
