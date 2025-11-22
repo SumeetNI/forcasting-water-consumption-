@@ -717,3 +717,125 @@ select:focus {
   background: #ff0000;
   box-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
 }
+
+/* ---------- Conservation Simulator ---------- */
+.sim-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.sim-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sim-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.sim-label .highlight {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Range Slider Styling */
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  background: transparent;
+  padding: 0;
+  border: none;
+}
+
+input[type=range]:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Webkit Track */
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: rgba(122, 234, 255, 0.15);
+  border-radius: 999px;
+  border: 1px solid rgba(122, 234, 255, 0.1);
+}
+
+/* Webkit Thumb */
+input[type=range]::-webkit-slider-thumb {
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -7px;
+  /* centers thumb */
+  box-shadow: 0 0 10px rgba(106, 198, 255, 0.5);
+  transition: transform 0.1s ease;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  background: #fff;
+}
+
+/* Firefox Track */
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: rgba(122, 234, 255, 0.15);
+  border-radius: 999px;
+  border: 1px solid rgba(122, 234, 255, 0.1);
+}
+
+/* Firefox Thumb */
+input[type=range]::-moz-range-thumb {
+  height: 18px;
+  width: 18px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(106, 198, 255, 0.5);
+}
+
+.sim-result {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(122, 234, 255, 0.2);
+}
+
+.sim-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sim-metric .label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+}
+
+.sim-metric .value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.sim-metric .value.success {
+  color: #7bffce;
+  text-shadow: 0 0 15px rgba(123, 255, 206, 0.25);
+}

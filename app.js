@@ -335,6 +335,7 @@ predictForm.addEventListener('submit', async (e) => {
     // Render sector breakdown if available
     if (data.sectors) {
       renderSectorChart(data.sectors);
+      initSimulator(data.sectors, data.predicted);
     }
 
     store.add({ country, year, models, predicted: data.predicted, change: data.change, ts: Date.now() });
@@ -599,3 +600,66 @@ document.getElementById('downloadReport').addEventListener('click', async () => 
   // Save
   doc.save("Water_Forecast_Report.pdf");
 });
+
+// ---------- CONSERVATION SIMULATOR ----------
+let simOriginalSectors = null;
+let simOriginalTotal = 0;
+
+function initSimulator(sectors, totalPredicted) {
+  simOriginalSectors = { ...sectors };
+  simOriginalTotal = totalPredicted;
+
+  // Reset sliders
+  ['agri', 'ind', 'dom'].forEach(k => {
+    const el = document.getElementById(`sim-${k}`);
+    if (!el) return;
+    el.value = 0;
+    document.getElementById(`val-${k}`).textContent = '0%';
+
+    // Remove old listeners to prevent duplicates
+    const newEl = el.cloneNode(true);
+    el.parentNode.replaceChild(newEl, el);
+
+    newEl.addEventListener('input', updateSimulator);
+  });
+
+  updateSimulator();
+}
+
+function updateSimulator() {
+  if (!simOriginalSectors) return;
+
+  const getVal = (id) => {
+    const el = document.getElementById(id);
+    return el ? +el.value : 0;
+  };
+  const pctAgri = getVal('sim-agri');
+  const pctInd = getVal('sim-ind');
+  const pctDom = getVal('sim-dom');
+
+  // Update labels
+  document.getElementById('val-agri').textContent = `${pctAgri}%`;
+  document.getElementById('val-ind').textContent = `${pctInd}%`;
+  document.getElementById('val-dom').textContent = `${pctDom}%`;
+
+  // Calculate savings
+  const savedAgri = simOriginalSectors.agriculture * (pctAgri / 100);
+  const savedInd = simOriginalSectors.industry * (pctInd / 100);
+  const savedDom = simOriginalSectors.domestic * (pctDom / 100);
+
+  const totalSaved = savedAgri + savedInd + savedDom;
+  const newTotal = simOriginalTotal - totalSaved;
+
+  // Update Text
+  document.getElementById('sim-saved').textContent = `${fmt(totalSaved)} m³`;
+  document.getElementById('sim-new-total').textContent = `${fmt(newTotal)} m³`;
+
+  // Update Chart
+  const newSectors = {
+    agriculture: simOriginalSectors.agriculture - savedAgri,
+    industry: simOriginalSectors.industry - savedInd,
+    domestic: simOriginalSectors.domestic - savedDom
+  };
+
+  renderSectorChart(newSectors);
+}

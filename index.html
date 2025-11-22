@@ -161,6 +161,52 @@
               <canvas id="sectorChart" height="200"></canvas>
             </div>
           </div>
+
+          <!-- CONSERVATION SIMULATOR -->
+          <div class="card simulator-card" style="margin-top: 18px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <h3 class="section-subtitle" style="margin:0;">🌱 Conservation Simulator</h3>
+              <span class="tag soft" style="font-size: 0.7rem;">BETA</span>
+            </div>
+            <p class="note" style="margin: 8px 0 16px;">Adjust efficiency to see potential savings.</p>
+
+            <div class="sim-controls">
+              <div class="sim-control">
+                <div class="sim-label">
+                  <span>🌾 Agriculture</span>
+                  <span id="val-agri" class="highlight">0%</span>
+                </div>
+                <input type="range" id="sim-agri" min="0" max="50" value="0" step="1">
+              </div>
+
+              <div class="sim-control">
+                <div class="sim-label">
+                  <span>🏭 Industry</span>
+                  <span id="val-ind" class="highlight">0%</span>
+                </div>
+                <input type="range" id="sim-ind" min="0" max="50" value="0" step="1">
+              </div>
+
+              <div class="sim-control">
+                <div class="sim-label">
+                  <span>🏠 Domestic</span>
+                  <span id="val-dom" class="highlight">0%</span>
+                </div>
+                <input type="range" id="sim-dom" min="0" max="50" value="0" step="1">
+              </div>
+            </div>
+
+            <div class="sim-result">
+              <div class="sim-metric">
+                <span class="label">Water Saved</span>
+                <span id="sim-saved" class="value success">0 m³</span>
+              </div>
+              <div class="sim-metric">
+                <span class="label">New Demand</span>
+                <span id="sim-new-total" class="value">—</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
