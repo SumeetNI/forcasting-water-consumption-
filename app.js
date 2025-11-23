@@ -663,3 +663,151 @@ function updateSimulator() {
 
   renderSectorChart(newSectors);
 }
+
+// ---------- WATERBOT AI ----------
+const wbFab = document.getElementById('waterbot-fab');
+const wbWindow = document.getElementById('waterbot-window');
+const wbClose = document.getElementById('wb-close');
+const wbForm = document.getElementById('wb-form');
+const wbInput = document.getElementById('wb-input');
+const wbMsgs = document.getElementById('wb-messages');
+
+// Toggle Window
+const toggleWb = () => wbWindow.classList.toggle('hidden');
+wbFab.addEventListener('click', toggleWb);
+wbClose.addEventListener('click', toggleWb);
+
+// Add Message
+function addWbMessage(text, sender) {
+  const div = document.createElement('div');
+  div.className = `wb-msg ${sender}`;
+  div.innerHTML = text;
+  wbMsgs.appendChild(div);
+  wbMsgs.scrollTop = wbMsgs.scrollHeight;
+}
+
+// Process Command
+async function processWbCommand(text) {
+  const lower = text.toLowerCase();
+
+  // 1. Navigation
+  if (lower.includes('go to') || lower.includes('navigate') || lower.includes('show')) {
+    const sections = ['home', 'predict', 'compare', 'analysis', 'history'];
+    const target = sections.find(s => lower.includes(s));
+    if (target) {
+      location.hash = `#${target}`;
+      return `Navigating to <b>${target}</b> section...`;
+    }
+  }
+
+  // 2. Prediction: "Predict India 2030"
+  if (lower.includes('predict')) {
+    const words = lower.split(' ');
+    const year = words.find(w => !isNaN(w) && w.length === 4);
+
+    // Find country
+    const countries = [...countrySel.options].map(o => o.value);
+    const country = countries.find(c => lower.includes(c.toLowerCase()));
+
+    if (country && year) {
+      countrySel.value = country;
+      document.getElementById('year').value = year;
+      location.hash = '#predict';
+
+      // Trigger prediction
+      addWbMessage(`Running prediction for <b>${country}</b> in <b>${year}</b>...`, 'bot');
+
+      // Small delay to allow UI update
+      setTimeout(() => {
+        predictForm.dispatchEvent(new Event('submit'));
+      }, 500);
+
+      return null; // Already sent message
+    } else if (country) {
+      return `I found <b>${country}</b>, but what year? (e.g., "Predict ${country} 2030")`;
+    } else {
+      return "Please specify a country and year. (e.g., 'Predict China 2025')";
+    }
+  }
+
+  // 3. Explain Model
+  if (lower.includes('explain') || lower.includes('what is') || lower.includes('tell me about')) {
+    if (lower.includes('lasso')) return "<b>LASSO</b> (Least Absolute Shrinkage and Selection Operator) is a regression analysis method that performs both variable selection and regularization. It's great for identifying the most important features.";
+    if (lower.includes('knn')) return "<b>KNN</b> (K-Nearest Neighbors) is a simple algorithm that stores all available cases and predicts the numerical target based on a similarity measure (e.g., distance functions).";
+    if (lower.includes('ridge')) return "<b>Ridge Regression</b> is a method of estimating the coefficients of multiple-regression models in scenarios where independent variables are highly correlated. It prevents overfitting.";
+  }
+
+  // 4. Compare Country
+  if (lower.includes('compare')) {
+    // Find country
+    const countries = [...countrySel.options].map(o => o.value);
+    const country = countries.find(c => lower.includes(c.toLowerCase()));
+
+    if (country) {
+      countrySel.value = country;
+      location.hash = '#compare';
+      renderCompare(country);
+      return `Opening comparison view for <b>${country}</b>...`;
+    } else if (lower === 'compare') {
+      location.hash = '#compare';
+      return "Navigating to <b>Compare</b> section...";
+    }
+  }
+
+  // 5. Reset App
+  if (lower.includes('reset') || lower.includes('clear history') || lower.includes('start over')) {
+    localStorage.removeItem(store.key);
+    renderHistory();
+    renderCarousel();
+    return "App has been reset. History cleared.";
+  }
+
+  // 6. General (Local Fallback)
+  if (lower.includes('hello') || lower.includes('hi')) return "Hello! Ready to forecast water trends?";
+  if (lower.includes('help')) return "Try commands like: <br>• Predict USA 2028<br>• Explain LASSO<br>• Compare India<br>• Reset App";
+  if (lower.includes('who are you')) return "I'm WaterBot, your simulated AI assistant.";
+
+  // 7. AI Chat (Backend)
+  try {
+    addWbMessage("Thinking...", "bot temporary"); // Show temp message
+
+    const res = await fetch(`${BASE_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text })
+    });
+
+    // Remove temp message
+    const temp = document.querySelector('.bot.temporary');
+    if (temp) temp.remove();
+
+    if (!res.ok) throw new Error("AI unavailable");
+    const data = await res.json();
+    return data.response;
+
+  } catch (err) {
+    return "I'm having trouble connecting to the server. Please check if the backend is running.";
+  }
+}
+
+// Handle Submit
+wbForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = wbInput.value.trim();
+  if (!text) return;
+
+  addWbMessage(text, 'user');
+  wbInput.value = '';
+
+  // Simulate thinking delay
+  setTimeout(async () => {
+    const response = await processWbCommand(text);
+    if (response) addWbMessage(response, 'bot');
+  }, 600);
+});
+
+// Global Chip Handler
+window.wbChip = (text) => {
+  wbInput.value = text;
+  wbForm.dispatchEvent(new Event('submit'));
+};

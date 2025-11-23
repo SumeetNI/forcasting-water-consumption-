@@ -9,6 +9,23 @@ from typing import List, Dict, Any
 
 # Metrics
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import google.generativeai as genai
+
+# --- GEMINI CONFIG ---
+# PASTE YOUR API KEY HERE
+GEMINI_API_KEY = "AIzaSyCw6A2GUnKN-gC6elmxo6BCL6RLXnMyTtg" 
+genai.configure(api_key=GEMINI_API_KEY)
+
+SYSTEM_CONTEXT = """
+You are WaterBot, an AI assistant for the "Water Consumption Forecasting" app.
+Your goal is to help users understand water usage trends for 20 countries (1990-2024).
+The app uses LASSO, KNN, and Ridge Regression models to predict future consumption.
+It also has a "Conservation Simulator" to test efficiency improvements.
+
+Supported Countries: India, China, USA, Brazil, Russia, etc.
+If asked about a country not in the list, say you don't have data for it.
+Keep answers concise and helpful.
+"""
 
 app = FastAPI(title="Water Consumption Forecast API")
 
@@ -65,6 +82,10 @@ class PredictInput(BaseModel):
     country: str
     year: int
     models: List[str] = []
+
+
+class ChatInput(BaseModel):
+    message: str
 
 
 @app.get("/health")
@@ -252,3 +273,41 @@ def country_analysis(country: str):
         "years": hist["Year"].tolist(),
         "true_values": hist[TARGET_COL].astype(float).tolist()
     }
+
+
+import traceback
+# ---------------------- CHATBOT (debuggable) ----------------------
+@app.post("/chat")
+def chat(body: ChatInput):
+    # quick guard
+    if not GEMINI_API_KEY or GEMINI_API_KEY in ["YOUR_API_KEY_HERE", ""]:
+        return {"response": "⚠️ Please configure your Gemini API Key in backend/main.py to use the AI features."}
+
+    try:
+        # <- Use a current model name
+        model = genai.GenerativeModel("gemini-1.5-flash-001")
+
+        # build a short, clear history; keep SYSTEM_CONTEXT as the user provided
+        chat = model.start_chat(history=[
+            {"role": "user", "parts": [SYSTEM_CONTEXT]},
+            {"role": "model", "parts": ["Understood. I am WaterBot. Ready to assist."]}
+        ])
+
+        response = chat.send_message(body.message)
+
+        # If response object doesn't have .text, fallback to string conversion
+        text = getattr(response, "text", None) or str(response)
+        return {"response": text}
+
+    except Exception as e:
+        # print full traceback to server console (uvicorn logs)
+        tb = traceback.format_exc()
+        print("[GEMINI ERROR]", e)
+        print(tb)
+
+        # return the real exception message (and a short snippet of traceback) to the client for debugging
+        # NOTE: remove this detailed return in production (it may leak secrets)
+        return {
+            "response": f"Gemini Error: {str(e)}",
+            "traceback_snippet": tb.splitlines()[-6:]  # last few lines only
+        }
